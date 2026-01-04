@@ -1,0 +1,17 @@
+# Core dependencies
+chromadb>=0.4.0
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.20
+
+# PDF processing
+pymupdf>=1.23.0
+unstructured>=0.10.0
+
+# Utilities
+requests>=2.31.0
+tqdm>=4.66.0
+
+# Virtual Lab Framework
+# Note: Install virtual_lab from the parent repository
+# virtual_lab
