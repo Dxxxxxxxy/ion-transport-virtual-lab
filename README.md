@@ -175,7 +175,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Xiaoyang Du**
 - GitHub: [@Dxxxxxxxy](https://github.com/Dxxxxxxxy)
-- Email: dxy602127858@gmail.com
+- Email: kexiaoyangdu@ust.hk
 - Affiliation: HKUST (Hong Kong University of Science and Technology)
 
 ## Citation
