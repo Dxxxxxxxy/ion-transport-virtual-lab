@@ -176,7 +176,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Xiaoyang Du**
 - GitHub: [@Dxxxxxxxy](https://github.com/Dxxxxxxxy)
 - Email: kexiaoyangdu@ust.hk
-- Affiliation: HKUST (Hong Kong University of Science and Technology)
+- Affiliation: Prof Dan Li's group at HKUST (Hong Kong University of Science and Technology)
 
 ## Citation
 
@@ -184,7 +184,7 @@ If you use this framework in your research, please cite:
 
 ```bibtex
 @software{du2026_ion_transport_virtual_lab,
-  author = {Du, Xiaoyang},
+  author = {Prof. Dan Li's group/Du, Xiaoyang},
   title = {Ion Transport Virtual Lab: Multi-Agent Framework for Research Symposiums},
   year = {2026},
   url = {https://github.com/Dxxxxxxxy/ion-transport-virtual-lab}
