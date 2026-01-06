@@ -22,8 +22,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import chromadb
 from chromadb.config import Settings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 import hashlib
 from tqdm import tqdm
@@ -31,6 +30,16 @@ import fitz  # PyMuPDF
 import requests
 import re
 import time
+import json
+
+# Import multimodal modules
+try:
+    from ion_transport.knowledge_base.multimodal_extractor import MultimodalExtractor
+    from ion_transport.knowledge_base.multimodal_embeddings import MultimodalEmbedder
+    MULTIMODAL_AVAILABLE = True
+except ImportError:
+    MULTIMODAL_AVAILABLE = False
+    print("⚠️  Multimodal modules not found. Running in text-only mode.")
 
 
 # Configuration
@@ -288,17 +297,19 @@ class CitationExtractor:
 class PDFIngester:
     """Handles PDF ingestion, processing, and storage in ChromaDB."""
 
-    def __init__(self, base_dir: Path, vector_db_dir: Path):
+    def __init__(self, base_dir: Path, vector_db_dir: Path, enable_multimodal: bool = True):
         """
         Initialize PDF ingester.
 
         Args:
             base_dir: Path to knowledge_base directory
             vector_db_dir: Path to vector database storage
+            enable_multimodal: Whether to enable multimodal figure extraction
         """
         self.base_dir = base_dir
-        self.pdf_dir = base_dir / "pdfs"
+        self.pdf_dir = base_dir.parent / "data" / "pdfs"
         self.vector_db_dir = vector_db_dir
+        self.enable_multimodal = enable_multimodal and MULTIMODAL_AVAILABLE
 
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
@@ -320,6 +331,18 @@ class PDFIngester:
         # Initialize citation extractor
         self.citation_extractor = CitationExtractor()
 
+        # Initialize multimodal components
+        if self.enable_multimodal:
+            image_output_dir = base_dir.parent / "data" / "extracted_figures"
+            self.multimodal_extractor = MultimodalExtractor(image_output_dir)
+            self.multimodal_embedder = MultimodalEmbedder()
+            print("✓ Multimodal RAG enabled: Figures will be extracted and analyzed")
+        else:
+            self.multimodal_extractor = None
+            self.multimodal_embedder = None
+            if MULTIMODAL_AVAILABLE:
+                print("ℹ️  Multimodal RAG disabled: Text-only mode")
+
     def get_or_create_collection(self, domain: str):
         """Get or create ChromaDB collection for a domain."""
         collection_name = f"{domain}_papers"
@@ -333,6 +356,39 @@ class PDFIngester:
             )
             print(f"✓ Created new collection: {collection_name}")
         return collection
+
+    def get_already_processed_pdfs(self, collection) -> set:
+        """
+        Get set of filenames that have already been processed in this collection.
+
+        Args:
+            collection: ChromaDB collection
+
+        Returns:
+            Set of filenames (e.g., {'paper1.pdf', 'paper2.pdf'})
+        """
+        try:
+            # Get all documents in the collection
+            count = collection.count()
+
+            if count == 0:
+                return set()
+
+            # Retrieve all metadata (in batches if necessary)
+            result = collection.get(limit=count, include=['metadatas'])
+
+            # Extract unique filenames from metadata
+            filenames = set()
+            if result and 'metadatas' in result:
+                for metadata in result['metadatas']:
+                    if metadata and 'filename' in metadata:
+                        filenames.add(metadata['filename'])
+
+            return filenames
+
+        except Exception as e:
+            print(f"    ⚠ Warning: Could not check existing PDFs: {e}")
+            return set()
 
     def extract_pdf_metadata(self, pdf_path: Path) -> Dict[str, str]:
         """
@@ -375,22 +431,21 @@ class PDFIngester:
         print(f"  Processing: {pdf_path.name}")
 
         try:
-            # Use UnstructuredPDFLoader for comprehensive extraction
-            # This extracts text, tables, images, and maintains structure
-            loader = UnstructuredPDFLoader(
-                str(pdf_path),
-                mode="elements",  # Extract individual elements
-                strategy="hi_res",  # High-resolution processing for tables/figures
-            )
+            # Use PyMuPDF (fitz) for text extraction
+            doc = fitz.open(pdf_path)
 
-            # Load and parse PDF
-            documents = loader.load()
+            # Extract text from all pages
+            full_text = ""
+            num_pages = len(doc)
+            for page_num in range(num_pages):
+                page = doc[page_num]
+                page_text = page.get_text()
+                full_text += page_text + "\n\n"
+
+            doc.close()
 
             # Extract metadata
             base_metadata = self.extract_pdf_metadata(pdf_path)
-
-            # Combine all text from elements
-            full_text = "\n\n".join([doc.page_content for doc in documents])
 
             # Split into chunks
             chunks = self.text_splitter.split_text(full_text)
@@ -410,16 +465,205 @@ class PDFIngester:
                     "metadata": chunk_metadata,
                 })
 
-            print(f"    ✓ Extracted {len(chunks)} chunks from {len(documents)} elements")
+            print(f"    ✓ Extracted {len(chunks)} chunks from {num_pages} pages")
             return doc_chunks
 
         except Exception as e:
             print(f"    ✗ Error processing {pdf_path.name}: {str(e)}")
             return []
 
+    def process_pdf_figures(self, pdf_path: Path, domain: str, base_metadata: Dict[str, str]) -> List[Dict[str, Any]]:
+        """
+        Process figures from a PDF using multimodal analysis.
+
+        Args:
+            pdf_path: Path to PDF file
+            domain: Domain category
+            base_metadata: Base metadata from PDF
+
+        Returns:
+            List of figure chunks with embeddings
+        """
+        if not self.enable_multimodal or not self.multimodal_extractor:
+            return []
+
+        try:
+            # Extract and analyze all figures
+            figures = self.multimodal_extractor.process_pdf_multimodal(pdf_path, domain)
+
+            if not figures:
+                return []
+
+            # Process each figure into a searchable chunk
+            figure_chunks = []
+
+            for fig_idx, figure_data in enumerate(figures):
+                # Create rich text representation of the figure
+                text_parts = []
+
+                # Add caption
+                if figure_data.get("caption"):
+                    text_parts.append(f"Figure Caption: {figure_data['caption']}")
+
+                # Add vision analysis
+                if "vision_analysis" in figure_data:
+                    analysis = figure_data["vision_analysis"]
+
+                    if "figure_type" in analysis:
+                        text_parts.append(f"Figure Type: {analysis['figure_type']}")
+
+                    if "description" in analysis:
+                        text_parts.append(f"Description: {analysis['description']}")
+
+                    if "key_insights" in analysis:
+                        insights = analysis["key_insights"]
+                        if isinstance(insights, list):
+                            text_parts.append(f"Key Insights: {'; '.join(insights)}")
+
+                    if "approximate_values" in analysis:
+                        text_parts.append(f"Approximate Values: {analysis['approximate_values']}")
+
+                    if "variables" in analysis:
+                        text_parts.append(f"Variables: {json.dumps(analysis['variables'])}")
+
+                # Add plot data if available
+                if figure_data.get("plot_data"):
+                    plot_data = figure_data["plot_data"]
+                    text_parts.append(f"Plot Data: {json.dumps(plot_data)}")
+
+                # Combine all text
+                figure_text = "\n".join(text_parts)
+
+                # Create metadata
+                figure_metadata = base_metadata.copy()
+                figure_metadata.update({
+                    "content_type": "figure",
+                    "figure_index": fig_idx,
+                    "page_number": figure_data["image_metadata"]["page_number"],
+                    "image_filename": figure_data["image_metadata"]["filename"],
+                    "image_path": figure_data["image_metadata"]["path"],
+                    "figure_type": figure_data.get("vision_analysis", {}).get("figure_type", "Unknown"),
+                    "has_plot_data": figure_data.get("plot_data") is not None,
+                })
+
+                # Generate embedding using multimodal embedder
+                embedding = self.multimodal_embedder.embed_figure_content(
+                    figure_data.get("vision_analysis", {}),
+                    figure_data.get("caption")
+                )
+
+                figure_chunks.append({
+                    "text": figure_text,
+                    "metadata": figure_metadata,
+                    "embedding": embedding,
+                    "figure_data": figure_data,  # Store full figure data for reference
+                })
+
+            print(f"    ✓ Created {len(figure_chunks)} searchable figure chunks")
+            return figure_chunks
+
+        except Exception as e:
+            print(f"    ✗ Error processing figures: {str(e)}")
+            return []
+
+    def process_pdf_equations(
+        self,
+        pdf_path: Path,
+        domain: str,
+        base_metadata: Dict[str, str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Process equations from a PDF.
+
+        Args:
+            pdf_path: Path to PDF file
+            domain: Domain category
+            base_metadata: Base metadata from PDF
+
+        Returns:
+            List of equation chunks with embeddings
+        """
+        if not self.enable_multimodal or not self.multimodal_extractor:
+            return []
+
+        try:
+            # Extract equations using multimodal extractor
+            equations = self.multimodal_extractor.process_pdf_equations(pdf_path, domain)
+
+            if not equations:
+                return []
+
+            # Process each equation into a searchable chunk
+            equation_chunks = []
+
+            for eq_idx, equation_data in enumerate(equations):
+                # Create text representation of equation
+                text_parts = []
+
+                # Add LaTeX equation
+                latex = equation_data.get("latex", "")
+                if latex:
+                    text_parts.append(f"Equation (LaTeX): {latex}")
+
+                # Add equation type
+                eq_type = equation_data.get("type", "unknown")
+                text_parts.append(f"Type: {eq_type} equation")
+
+                # Add equation number if present
+                eq_number = equation_data.get("number")
+                if eq_number:
+                    text_parts.append(f"Equation number: {eq_number}")
+
+                # Add page number
+                page = equation_data.get("page", 0)
+                text_parts.append(f"Page: {page}")
+
+                # Combine all text
+                equation_text = "\n".join(text_parts)
+
+                # Create metadata
+                equation_metadata = base_metadata.copy()
+                equation_metadata.update({
+                    "content_type": "equation",
+                    "equation_index": eq_idx,
+                    "page_number": page,
+                    "equation_type": eq_type,
+                    "equation_number": eq_number,
+                    "latex": latex,
+                    "has_image": equation_data.get("image_path") is not None,
+                    "image_path": equation_data.get("image_path", ""),
+                    "source": equation_data.get("source", "unknown"),
+                })
+
+                # Generate embedding for equation text
+                embedding = self.embeddings.embed_query(equation_text)
+
+                equation_chunks.append({
+                    "text": equation_text,
+                    "metadata": equation_metadata,
+                    "embedding": embedding,
+                    "equation_data": equation_data,
+                })
+
+            print(f"    ✓ Created {len(equation_chunks)} searchable equation chunks")
+            return equation_chunks
+
+        except Exception as e:
+            print(f"    ✗ Error processing equations: {str(e)}")
+            return []
+
     def generate_doc_id(self, text: str, metadata: Dict) -> str:
         """Generate unique ID for document chunk."""
-        unique_string = f"{metadata['filename']}_{metadata['chunk_id']}_{text[:100]}"
+        content_type = metadata.get('content_type', 'text')
+
+        if content_type == 'figure':
+            unique_string = f"{metadata['filename']}_figure_{metadata['figure_index']}_{text[:50]}"
+        elif content_type == 'equation':
+            unique_string = f"{metadata['filename']}_equation_{metadata['equation_index']}_{text[:50]}"
+        else:
+            chunk_id = metadata.get('chunk_id', 0)
+            unique_string = f"{metadata['filename']}_{chunk_id}_{text[:100]}"
+
         return hashlib.md5(unique_string.encode()).hexdigest()
 
     def ingest_domain(self, domain: str) -> int:
@@ -439,54 +683,139 @@ class PDFIngester:
             return 0
 
         # Get all PDF files
-        pdf_files = list(domain_dir.glob("*.pdf"))
+        all_pdf_files = list(domain_dir.glob("*.pdf"))
 
-        if not pdf_files:
+        if not all_pdf_files:
             print(f"⚠ No PDF files found in {domain}/")
             return 0
-
-        print(f"\n{'='*80}")
-        print(f"📚 Processing {len(pdf_files)} PDFs from {domain}/")
-        print(f"{'='*80}")
 
         # Get or create collection
         collection = self.get_or_create_collection(domain)
 
+        # Get already-processed PDFs
+        already_processed = self.get_already_processed_pdfs(collection)
+
+        # Filter to only new PDFs
+        pdf_files = [pdf for pdf in all_pdf_files if pdf.name not in already_processed]
+
+        print(f"\n{'='*80}")
+        print(f"📚 Domain: {domain}/")
+        print(f"   Total PDFs in folder: {len(all_pdf_files)}")
+        print(f"   Already processed: {len(already_processed)}")
+        print(f"   New PDFs to ingest: {len(pdf_files)}")
+        print(f"{'='*80}")
+
+        if not pdf_files:
+            print(f"✓ No new PDFs to process in {domain}/")
+            return 0
+
         total_chunks = 0
+        total_figures = 0
+        total_equations = 0
 
         # Process each PDF
         for pdf_path in tqdm(pdf_files, desc=f"Ingesting {domain}"):
+            # Process text chunks
             doc_chunks = self.process_pdf(pdf_path, domain)
 
             if not doc_chunks:
                 continue
 
-            # Prepare data for ChromaDB
-            texts = [chunk["text"] for chunk in doc_chunks]
-            metadatas = [chunk["metadata"] for chunk in doc_chunks]
-            ids = [self.generate_doc_id(chunk["text"], chunk["metadata"])
-                   for chunk in doc_chunks]
+            # Get base metadata for figures
+            base_metadata = self.extract_pdf_metadata(pdf_path) if doc_chunks else {}
 
-            # Generate embeddings
-            try:
-                embeddings = self.embeddings.embed_documents(texts)
+            # Process figures if multimodal is enabled
+            figure_chunks = []
+            if self.enable_multimodal:
+                figure_chunks = self.process_pdf_figures(pdf_path, domain, base_metadata)
 
-                # Add to collection
-                collection.add(
-                    embeddings=embeddings,
-                    documents=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                )
+            # Process equations if multimodal is enabled
+            equation_chunks = []
+            if self.enable_multimodal:
+                equation_chunks = self.process_pdf_equations(pdf_path, domain, base_metadata)
 
-                total_chunks += len(doc_chunks)
+            # Combine text, figure, and equation chunks
+            all_chunks = doc_chunks + figure_chunks + equation_chunks
 
-            except Exception as e:
-                print(f"    ✗ Error adding to database: {str(e)}")
+            if not all_chunks:
                 continue
 
-        print(f"\n✓ Ingested {total_chunks} chunks from {len(pdf_files)} papers")
-        return total_chunks
+            # Prepare data for ChromaDB (text chunks)
+            if doc_chunks:
+                texts = [chunk["text"] for chunk in doc_chunks]
+                metadatas = [chunk["metadata"] for chunk in doc_chunks]
+                ids = [self.generate_doc_id(chunk["text"], chunk["metadata"])
+                       for chunk in doc_chunks]
+
+                # Generate embeddings for text
+                try:
+                    embeddings = self.embeddings.embed_documents(texts)
+
+                    # Add text chunks to collection
+                    collection.add(
+                        embeddings=embeddings,
+                        documents=texts,
+                        metadatas=metadatas,
+                        ids=ids,
+                    )
+
+                    total_chunks += len(doc_chunks)
+
+                except Exception as e:
+                    print(f"    ✗ Error adding text to database: {str(e)}")
+
+            # Add figure chunks to collection (they already have embeddings)
+            if figure_chunks:
+                fig_texts = [chunk["text"] for chunk in figure_chunks]
+                fig_metadatas = [chunk["metadata"] for chunk in figure_chunks]
+                fig_embeddings = [chunk["embedding"] for chunk in figure_chunks]
+                fig_ids = [self.generate_doc_id(chunk["text"], chunk["metadata"])
+                           for chunk in figure_chunks]
+
+                try:
+                    # Add figure chunks to collection
+                    collection.add(
+                        embeddings=fig_embeddings,
+                        documents=fig_texts,
+                        metadatas=fig_metadatas,
+                        ids=fig_ids,
+                    )
+
+                    total_figures += len(figure_chunks)
+
+                except Exception as e:
+                    print(f"    ✗ Error adding figures to database: {str(e)}")
+
+            # Add equation chunks to collection (they already have embeddings)
+            if equation_chunks:
+                eq_texts = [chunk["text"] for chunk in equation_chunks]
+                eq_metadatas = [chunk["metadata"] for chunk in equation_chunks]
+                eq_embeddings = [chunk["embedding"] for chunk in equation_chunks]
+                eq_ids = [self.generate_doc_id(chunk["text"], chunk["metadata"])
+                          for chunk in equation_chunks]
+
+                try:
+                    # Add equation chunks to collection
+                    collection.add(
+                        embeddings=eq_embeddings,
+                        documents=eq_texts,
+                        metadatas=eq_metadatas,
+                        ids=eq_ids,
+                    )
+
+                    total_equations += len(equation_chunks)
+
+                except Exception as e:
+                    print(f"    ✗ Error adding equations to database: {str(e)}")
+
+        summary = f"\n✓ Ingested {total_chunks} text chunks from {len(pdf_files)} new papers"
+        if total_figures > 0:
+            summary += f"\n✓ Ingested {total_figures} figure chunks with multimodal analysis"
+        if total_equations > 0:
+            summary += f"\n✓ Ingested {total_equations} equation chunks with LaTeX conversion"
+        print(summary)
+
+        return total_chunks + total_figures + total_equations
 
     def ingest_all(self):
         """Ingest PDFs from all domain folders."""
@@ -498,6 +827,7 @@ class PDFIngester:
         print(f"Chunk Size: {CHUNK_SIZE} tokens")
         print(f"Chunk Overlap: {CHUNK_OVERLAP} tokens")
         print(f"Embedding Model: {EMBEDDING_MODEL}")
+        print(f"Multimodal RAG: {'✓ ENABLED (figures will be extracted & analyzed)' if self.enable_multimodal else '✗ Disabled (text-only mode)'}")
 
         total_chunks_all = 0
 
@@ -532,19 +862,45 @@ class PDFIngester:
 
 def main():
     """Main entry point."""
+    import argparse
+
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Ingest PDF papers into knowledge base with optional multimodal processing"
+    )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show collection statistics only (no ingestion)"
+    )
+    parser.add_argument(
+        "--multimodal",
+        action="store_true",
+        default=True,
+        help="Enable multimodal RAG (extract and analyze figures) - DEFAULT"
+    )
+    parser.add_argument(
+        "--no-multimodal",
+        dest="multimodal",
+        action="store_false",
+        help="Disable multimodal RAG (text-only mode)"
+    )
+
+    args = parser.parse_args()
+
     # Get paths
     current_dir = Path(__file__).parent
     base_dir = current_dir  # knowledge_base/
-    vector_db_dir = current_dir.parent / "vector_db"  # ion_transport/vector_db/
+    vector_db_dir = current_dir.parent / "data" / "vector_db"  # ion_transport/data/vector_db/
 
     # Create vector_db directory if it doesn't exist
     vector_db_dir.mkdir(parents=True, exist_ok=True)
 
-    # Initialize ingester
-    ingester = PDFIngester(base_dir, vector_db_dir)
+    # Initialize ingester with multimodal option
+    ingester = PDFIngester(base_dir, vector_db_dir, enable_multimodal=args.multimodal)
 
     # Check if user wants to see stats or ingest
-    if len(sys.argv) > 1 and sys.argv[1] == "--stats":
+    if args.stats:
         ingester.get_collection_stats()
     else:
         # Run ingestion

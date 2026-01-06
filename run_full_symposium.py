@@ -7,6 +7,7 @@ This runs a comprehensive multi-round symposium with:
 - 4 Rounds of discussion with increasing depth
 """
 
+import argparse
 from pathlib import Path
 from virtual_lab.run_meeting import run_meeting
 from ion_transport.agents.detailed_agents import (
@@ -30,8 +31,12 @@ from ion_transport.prompts.detailed_prompts import (
 )
 
 
-def main():
-    """Run the full 4-round symposium with all experts."""
+def main(skip_confirmation=False):
+    """Run the full 4-round symposium with all experts.
+
+    Args:
+        skip_confirmation: If True, skip user confirmation prompt
+    """
 
     print("\n" + "="*80)
     print("FULL ION TRANSPORT SYMPOSIUM")
@@ -56,11 +61,14 @@ def main():
     print("⏱️  ESTIMATED TIME: 15-25 minutes total")
     print("="*80 + "\n")
 
-    # Get user confirmation
-    response = input("Proceed with full symposium? (yes/no): ").strip().lower()
-    if response not in ['yes', 'y']:
-        print("\nSymposium cancelled.")
-        return
+    # Get user confirmation unless skipped
+    if not skip_confirmation:
+        response = input("Proceed with full symposium? (yes/no): ").strip().lower()
+        if response not in ['yes', 'y']:
+            print("\nSymposium cancelled.")
+            return
+    else:
+        print("Auto-confirmed: Starting symposium...\n")
 
     # Define team
     team_lead = SYMPOSIUM_PI
@@ -218,4 +226,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run the full Ion Transport Symposium")
+    parser.add_argument(
+        "--yes", "-y",
+        action="store_true",
+        help="Skip confirmation prompt and start immediately"
+    )
+    args = parser.parse_args()
+
+    main(skip_confirmation=args.yes)

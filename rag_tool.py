@@ -171,7 +171,7 @@ class RAGIntegration:
         if not self.use_rag:
             return
 
-        vector_db_path = Path(__file__).parent / "vector_db"
+        vector_db_path = Path(__file__).parent / "data" / "vector_db"
 
         if not vector_db_path.exists():
             print("⚠️  Warning: Vector database not found. RAG will not work.")

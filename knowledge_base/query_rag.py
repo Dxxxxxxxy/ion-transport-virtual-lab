@@ -45,9 +45,9 @@ class RAGQueryEngine:
             vector_db_dir: Path to vector database. If None, uses default location.
         """
         if vector_db_dir is None:
-            # Default location: ion_transport/vector_db/
+            # Default location: ion_transport/data/vector_db/
             current_dir = Path(__file__).parent
-            vector_db_dir = current_dir.parent / "vector_db"
+            vector_db_dir = current_dir.parent / "data" / "vector_db"
 
         self.vector_db_dir = vector_db_dir
 
