@@ -319,9 +319,9 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ## 📞 联系方式 | Contact
 
-- **项目维护者**: [Your Name]
-- **邮箱**: [your.email@example.com]
-- **机构**: HKUST (香港科技大学)
+- **项目维护者**: Dr. Xiaoyang Du
+- **邮箱**: kexiaoyangdu@ust.hk
+- **机构**: Prof. Dan Li's Group at HKUST (香港科技大学)
 
 ---
 
