@@ -1,20 +1,16 @@
 # Ion Transport Virtual Lab
 
-**离子传输虚拟实验室** - 基于AI的多代理科学研讨系统
+**AI-Powered Multi-Agent Symposium System for Collaborative Research**
 
-An AI-powered multi-agent symposium system for collaborative research on ion transport mechanisms across multiple scientific domains.
+An advanced multi-agent framework enabling collaborative scientific research on ion transport mechanisms across electrochemistry, membrane science, biology, and nanofluidics domains.
+
+[中文版](README_CN.md) | English
 
 ---
 
-## 🎯 项目概述 | Overview
+## 🎯 Overview
 
-本项目实现了一个由6个AI代理组成的虚拟科学研讨会，通过4轮深入讨论探索离子传输的跨学科统一理论：
-
-- **4个领域专家**: 电化学、膜科学、生物学、纳米流体学
-- **1个研讨会主席** (PI): 引导讨论方向
-- **1个科学评论家**: 提供批判性反馈
-
-This project implements a virtual scientific symposium with 6 AI agents conducting 4 rounds of in-depth discussions to explore unified theories of ion transport across disciplines:
+This project implements a virtual scientific symposium with 6 AI agents conducting 4 rounds of in-depth discussions to explore unified theories of ion transport across multiple disciplines:
 
 - **4 Domain Experts**: Electrochemistry, Membrane Science, Biology, Nanofluidics
 - **1 Symposium Chair** (PI): Guides discussion direction
@@ -22,35 +18,36 @@ This project implements a virtual scientific symposium with 6 AI agents conducti
 
 ---
 
-## ✨ 核心特性 | Key Features
+## ✨ Key Features
 
-### 🤖 Validated Agentic RAG (验证式代理RAG)
-- 代理通过推理自主决定何时检索知识库
-- 实质性科学声明自动验证是否有证据支持
-- 17,763篇研究论文支持的领域隔离知识库
+### 🤖 Validated Agentic RAG
+- Agents autonomously decide when to retrieve from knowledge bases through reasoning
+- Automatic validation that substantive scientific claims are evidence-backed
+- Domain-isolated knowledge bases with 17,763 research paper chunks
+- Mandatory citations with source attribution
 
-### 🧠 增强型代理能力
-- ✅ **ReAct推理**: 明确的思考→行动→观察→回答流程
-- ✅ **持久记忆**: 跨研讨会轮次的学习和记忆
-- ✅ **战略规划**: 每轮讨论前的策略制定
-- ✅ **Phase 4工具**: 方程求解、绘图、概念图、网络搜索
-- ✅ **RAG验证**: 确保证据支持的回复
+### 🧠 Enhanced Agent Capabilities
+- ✅ **ReAct Reasoning**: Explicit Thought → Action → Observation → Answer flow
+- ✅ **Persistent Memory**: Cross-round learning and retention
+- ✅ **Strategic Planning**: Pre-discussion strategy formulation
+- ✅ **Phase 4 Tools**: Equation solving, plotting, concept mapping, web search
+- ✅ **RAG Validation**: Ensures evidence-supported responses
 
-### 🔬 科学严谨性
-- 领域隔离的知识库（防止跨领域污染）
-- 强制引用来源
-- 智能成本优化（简单回复跳过验证）
+### 🔬 Scientific Rigor
+- Domain-isolated knowledge bases (prevents cross-field contamination)
+- Mandatory source citations
+- Intelligent cost optimization (skips validation for simple responses)
 
 ---
 
-## 📋 系统要求 | Requirements
+## 📋 Requirements
 
-### 环境依赖
+### Environment
 - Python 3.8+
 - OpenAI API key (gpt-4o model access)
-- 至少2GB可用内存 (向量数据库177MB)
+- At least 2GB available memory (vector database: 177MB)
 
-### 主要依赖包
+### Dependencies
 ```
 openai >= 2.0.0
 chromadb >= 1.4.0
@@ -65,165 +62,165 @@ sympy
 
 ---
 
-## 🚀 快速开始 | Quick Start
+## 🚀 Quick Start
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```bash
-# 克隆项目
+# Navigate to project directory
 cd ion_transport
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 安装项目（可编辑模式）
+# Install package in editable mode
 pip install -e .
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
-# 复制环境变量模板
+# Copy environment template
 cp .env.example .env
 
-# 编辑.env文件，填入你的OpenAI API密钥
+# Edit .env file and add your OpenAI API key
 # OPENAI_API_KEY=sk-proj-your-actual-key-here
 ```
 
-或直接在终端设置：
+Or set directly in terminal:
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-### 3. 运行研讨会
+### 3. Run Symposium
 
 ```bash
-# 设置Python路径
+# Set Python path
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-# 运行完整4轮研讨会
+# Run full 4-round symposium
 python run_full_symposium.py --yes
 ```
 
-### 4. 查看结果
+### 4. View Results
 
-研讨会结果保存在 `results/full_symposium/` 目录：
+Symposium results are saved in `results/full_symposium/`:
 ```
 results/full_symposium/
 ├── round_1_landscape/
-│   ├── round1_discussion.md          # 讨论记录
-│   ├── round1_discussion.json        # JSON格式
-│   └── round1_discussion_summary.txt # 摘要
+│   ├── round1_discussion.md          # Discussion transcript
+│   ├── round1_discussion.json        # JSON format
+│   └── round1_discussion_summary.txt # Summary
 ├── round_2_principles/
 ├── round_3_framework/
 ├── round_4_applications/
-└── agent_data/                        # 代理数据（计划、统计）
+└── agent_data/                        # Agent data (plans, statistics)
 ```
 
 ---
 
-## 💰 成本估算 | Cost Estimates
+## 💰 Cost Estimates
 
-运行一次完整4轮研讨会的预计成本：
+Estimated cost for one complete 4-round symposium:
 
-- **LLM调用** (gpt-4o): ~$2.50
-- **RAG查询**: ~$0.50
-- **战略规划** (gpt-4o-mini): ~$0.10
-- **记忆整合**: ~$0.05
-- **工具使用**: $0.00 (本地计算)
+- **LLM Calls** (gpt-4o): ~$2.50
+- **RAG Queries**: ~$0.50
+- **Strategic Planning** (gpt-4o-mini): ~$0.10
+- **Memory Integration**: ~$0.05
+- **Tool Usage**: $0.00 (local computation)
 
-**总计**: **$3.20 - $4.00** / 每次研讨会
+**Total**: **$3.20 - $4.00** per symposium
 
-**预计时间**: 15-25分钟
+**Estimated Time**: 15-25 minutes
 
 ---
 
-## 📁 项目架构 | Architecture
+## 📁 Project Architecture
 
 ```
 ion_transport/
-├── agents/                    # 代理系统
-│   ├── base_agent.py         # 基础代理类
-│   ├── constants.py          # 配置常量
-│   ├── agent_definitions.py  # 6个代理定义
-│   ├── prompts.py            # 讨论议程
-│   └── enhancements/         # 增强功能
-│       ├── unified_agent.py  # 统一代理封装
-│       ├── memory_system.py  # 记忆系统
-│       ├── planning_system.py # 规划系统
-│       ├── tool_manager.py   # 工具管理
-│       └── rag_validator.py  # RAG验证
+├── agents/                    # Agent system
+│   ├── base_agent.py         # Base agent class
+│   ├── constants.py          # Configuration constants
+│   ├── agent_definitions.py  # 6 agent definitions
+│   ├── prompts.py            # Discussion agendas
+│   └── enhancements/         # Enhancement features
+│       ├── unified_agent.py  # Unified agent wrapper
+│       ├── memory_system.py  # Memory system
+│       ├── planning_system.py # Planning system
+│       ├── tool_manager.py   # Tool management
+│       └── rag_validator.py  # RAG validation
 │
-├── tools/                     # 工具系统
-│   ├── rag_tool.py           # RAG集成
-│   ├── web_search_tool.py    # 网络搜索
-│   ├── equation_solver_tool.py # 方程求解
-│   ├── plotting_tool.py      # 数据可视化
-│   └── concept_mapper_tool.py # 概念映射
+├── tools/                     # Tool system
+│   ├── rag_tool.py           # RAG integration
+│   ├── web_search_tool.py    # Web search
+│   ├── equation_solver_tool.py # Equation solving
+│   ├── plotting_tool.py      # Data visualization
+│   └── concept_mapper_tool.py # Concept mapping
 │
-├── knowledge_base/            # 知识库系统
-│   ├── ingest_papers.py      # 论文导入
-│   ├── query_rag.py          # RAG查询
-│   └── multimodal_*.py       # 多模态提取
+├── knowledge_base/            # Knowledge base system
+│   ├── ingest_papers.py      # Paper ingestion
+│   ├── query_rag.py          # RAG queries
+│   └── multimodal_*.py       # Multimodal extraction
 │
 ├── data/
-│   └── vector_db/            # ChromaDB向量数据库 (177MB)
+│   └── vector_db/            # ChromaDB vector database (177MB)
 │       └── 17,763 documents from 200+ papers
 │
-├── orchestrator.py           # 研讨会协调器
-└── run_full_symposium.py     # 主程序入口
+├── orchestrator.py           # Symposium coordinator
+└── run_full_symposium.py     # Main program entry
 ```
 
-### 详细架构说明
+### Detailed Documentation
 
-- 📖 **[完整架构文档](PROJECT_ARCHITECTURE_CN.md)** - 500+行详细说明（中文）
-- 📊 **[系统状态报告](SYSTEM_STATUS.md)** - 运行指南和故障排除
-
----
-
-## 🎓 研讨会流程 | Symposium Workflow
-
-### Round 1: 地图绘制 (2轮发言)
-- 各领域专家介绍本领域的离子传输现象
-- 识别关键机制和挑战
-
-### Round 2: 统一原理 (3轮发言)
-- 寻找跨领域的共同原理
-- 比较不同系统的选择性机制
-
-### Round 3: 统一框架 (4轮发言)
-- 构建整合多领域见解的理论框架
-- 开发预测模型
-
-### Round 4: 应用与未来 (3轮发言)
-- 讨论实际应用
-- 确定未来研究方向
+- 📖 **[Full Architecture Guide](PROJECT_ARCHITECTURE_CN.md)** - 500+ lines detailed documentation (Chinese)
+- 📊 **[System Status Report](SYSTEM_STATUS.md)** - Running guide and troubleshooting
 
 ---
 
-## 📊 知识库 | Knowledge Base
+## 🎓 Symposium Workflow
 
-### 向量数据库统计
-- **总文档数**: 17,763个文档片段
-- **数据库大小**: 176.80 MB
-- **来源**: 200+篇高质量研究论文
+### Round 1: Landscape Mapping (2 speaking rounds)
+- Domain experts introduce ion transport phenomena in their fields
+- Identify key mechanisms and challenges
 
-### 领域分布
-- **电化学**: 6,478 documents
-- **膜科学**: 4,026 documents
-- **生物学**: 534 documents
-- **纳米流体学**: 6,725 documents
+### Round 2: Unifying Principles (3 speaking rounds)
+- Search for common principles across domains
+- Compare selectivity mechanisms across different systems
+
+### Round 3: Unified Framework (4 speaking rounds)
+- Build theoretical framework integrating multi-domain insights
+- Develop predictive models
+
+### Round 4: Applications & Future Directions (3 speaking rounds)
+- Discuss practical applications
+- Identify future research directions
 
 ---
 
-## 🔧 高级使用 | Advanced Usage
+## 📊 Knowledge Base
 
-### 创建自定义代理
+### Vector Database Statistics
+- **Total Documents**: 17,763 document chunks
+- **Database Size**: 176.80 MB
+- **Source**: 200+ high-quality research papers
+
+### Domain Distribution
+- **Electrochemistry**: 6,478 documents
+- **Membrane Science**: 4,026 documents
+- **Biology**: 534 documents
+- **Nanofluidics**: 6,725 documents
+
+---
+
+## 🔧 Advanced Usage
+
+### Create Custom Agents
 
 ```python
 from agents import Agent, UnifiedAgent
 
-# 定义基础代理
+# Define base agent
 custom_agent = Agent(
     title="Custom Expert",
     expertise="Your expertise description",
@@ -232,7 +229,7 @@ custom_agent = Agent(
     model="gpt-4o"
 )
 
-# 封装为增强型代理
+# Wrap as enhanced agent
 enhanced_agent = UnifiedAgent(
     base_agent=custom_agent,
     domain="your_domain",
@@ -240,13 +237,13 @@ enhanced_agent = UnifiedAgent(
 )
 ```
 
-### 自定义讨论议程
+### Custom Discussion Agenda
 
 ```python
 from orchestrator import run_meeting
 from agents import CUSTOM_AGENT
 
-# 运行自定义讨论
+# Run custom discussion
 summary = run_meeting(
     team_lead=PI,
     team_members=(CUSTOM_AGENT,),
@@ -258,41 +255,41 @@ summary = run_meeting(
 
 ---
 
-## 🐛 故障排除 | Troubleshooting
+## 🐛 Troubleshooting
 
-### 导入错误
+### Import Errors
 ```bash
-# 确保PYTHONPATH正确设置
+# Ensure PYTHONPATH is set correctly
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-# 重新安装包
+# Reinstall package
 pip install -e .
 ```
 
-### API认证失败
+### API Authentication Failure
 ```bash
-# 检查API密钥是否设置
+# Check if API key is set
 echo $OPENAI_API_KEY
 
-# 测试API密钥有效性
+# Test API key validity
 python -c "import openai; client = openai.OpenAI(); print('API key valid')"
 ```
 
-### 内存不足
-- 向量数据库较大(177MB)，确保至少2GB可用内存
-- 可以考虑减少每次RAG查询的top_k值（默认5）
+### Out of Memory
+- Vector database is large (177MB), ensure at least 2GB available memory
+- Consider reducing top_k value in RAG queries (default: 5)
 
 ---
 
-## 📄 许可证 | License
+## 📄 License
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+MIT License - See [LICENSE](LICENSE) file for details
 
 ---
 
-## 📚 引用 | Citation
+## 📚 Citation
 
-如果您在研究中使用本项目，请引用：
+If you use this project in your research, please cite:
 
 ```bibtex
 @software{ion_transport_virtual_lab,
@@ -305,32 +302,32 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ---
 
-## 🤝 贡献 | Contributing
+## 🤝 Contributing
 
-欢迎贡献！请遵循以下步骤：
+Contributions are welcome! Please follow these steps:
 
-1. Fork本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启Pull Request
-
----
-
-## 📞 联系方式 | Contact
-
-- **项目维护者**: [Your Name]
-- **邮箱**: [your.email@example.com]
-- **机构**: HKUST (香港科技大学)
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-## 🙏 致谢 | Acknowledgments
+## 📞 Contact
+
+- **Project Maintainer**: [Your Name]
+- **Email**: [your.email@example.com]
+- **Institution**: HKUST (Hong Kong University of Science and Technology)
+
+---
+
+## 🙏 Acknowledgments
 
 - OpenAI for GPT-4o model
 - ChromaDB for vector database
 - LangChain for RAG framework
-- 所有贡献的研究论文作者
+- All contributing research paper authors
 
 ---
 
