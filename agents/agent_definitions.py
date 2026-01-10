@@ -1,7 +1,7 @@
 """Detailed expert agents with fine-tuned characteristics and knowledge restrictions."""
 
-from virtual_lab.agent import Agent
-from virtual_lab.constants import DEFAULT_MODEL
+from agents.base_agent import Agent
+from agents.constants import DEFAULT_MODEL
 
 
 # ============================================================================
@@ -328,9 +328,10 @@ SYMPOSIUM_PI = Agent(
 # ============================================================================
 # SCIENTIFIC CRITIC - Import from framework and customize if needed
 # ============================================================================
-from virtual_lab.prompts import SCIENTIFIC_CRITIC
+# Removed: from virtual_lab.prompts import SCIENTIFIC_CRITIC
+# Using custom critic instead (SCIENTIFIC_CRITIC available in ion_transport.constants if needed)
 
-# You can override the default critic if you want more specific behavior:
+# Custom scientific critic for ion transport symposium:
 CUSTOM_SCIENTIFIC_CRITIC = Agent(
     title="Scientific Critic",
 

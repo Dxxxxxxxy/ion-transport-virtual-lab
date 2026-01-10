@@ -860,6 +860,43 @@ class PDFIngester:
                 print(f"  Collection: Not created yet")
 
 
+def initialize_memory_collections():
+    """Initialize memory collections for all domains."""
+    print("\n" + "="*80)
+    print("🧠 INITIALIZING AGENT MEMORY COLLECTIONS")
+    print("="*80)
+
+    try:
+        from ion_transport.enhanced_agents import create_memory_for_all_domains, DEFAULT_MEMORY_CONFIG
+
+        # Create memory instances for all domains
+        print("\nCreating memory collections for all domains...")
+        memories = create_memory_for_all_domains(config=DEFAULT_MEMORY_CONFIG)
+
+        # Show statistics
+        print("\n" + "="*80)
+        print("✅ MEMORY INITIALIZATION COMPLETE")
+        print("="*80)
+
+        for domain, memory in memories.items():
+            stats = memory.get_statistics()
+            print(f"\n{domain.upper()}:")
+            print(f"  Total memories: {stats['total_memories']}")
+            print(f"  By type: {stats['by_type']}")
+            print(f"  Collection: {memory.collection_name}")
+
+        print("\n" + "="*80)
+        print("Memory collections are ready for use!")
+        print("Use --enable-memory flag when running symposiums.")
+        print("="*80 + "\n")
+
+    except Exception as e:
+        print(f"\n❌ Error initializing memory collections: {e}")
+        print("This is optional - RAG will still work without memory.")
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     """Main entry point."""
     import argparse
@@ -885,6 +922,11 @@ def main():
         action="store_false",
         help="Disable multimodal RAG (text-only mode)"
     )
+    parser.add_argument(
+        "--init-memory",
+        action="store_true",
+        help="Initialize memory collections for agent memory system (Phase 2 feature)"
+    )
 
     args = parser.parse_args()
 
@@ -895,6 +937,10 @@ def main():
 
     # Create vector_db directory if it doesn't exist
     vector_db_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize memory collections if requested
+    if args.init_memory:
+        initialize_memory_collections()
 
     # Initialize ingester with multimodal option
     ingester = PDFIngester(base_dir, vector_db_dir, enable_multimodal=args.multimodal)

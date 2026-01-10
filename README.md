@@ -1,204 +1,338 @@
 # Ion Transport Virtual Lab
 
-A multi-agent AI framework for conducting virtual research symposiums on ion transport phenomena across four scientific domains: Electrochemistry, Membrane Science, Biology, and Nanofluidics.
+**离子传输虚拟实验室** - 基于AI的多代理科学研讨系统
 
-## Overview
+An AI-powered multi-agent symposium system for collaborative research on ion transport mechanisms across multiple scientific domains.
 
-This project enables AI-powered collaborative research discussions by bringing together domain-specific expert agents equipped with:
-- **RAG (Retrieval-Augmented Generation)**: Each expert has access to curated research papers from their domain
-- **Multi-round symposiums**: Structured 4-round discussions to develop unified theoretical frameworks
-- **Scientific critique**: Built-in peer review and rigorous evaluation of ideas
-- **Citation support**: Automatic extraction and formatting of academic citations
+---
 
-## Features
+## 🎯 项目概述 | Overview
 
-- **4 Domain Expert Agents**:
-  - Electrochemistry Expert (EDL capacitors, CDI, supercapacitors)
-  - Membrane Science Expert (Desalination, ion separation)
-  - Biology Expert (Ion channels: K+, Na+, Ca2+)
-  - Nanofluidics Expert (Synthetic nanopores, nanochannels)
+本项目实现了一个由6个AI代理组成的虚拟科学研讨会，通过4轮深入讨论探索离子传输的跨学科统一理论：
 
-- **Knowledge Base with RAG**:
-  - PDF ingestion and processing
-  - Automatic DOI extraction and citation formatting
-  - Vector database using ChromaDB
-  - OpenAI embeddings for semantic search
+- **4个领域专家**: 电化学、膜科学、生物学、纳米流体学
+- **1个研讨会主席** (PI): 引导讨论方向
+- **1个科学评论家**: 提供批判性反馈
 
-- **Symposium System**:
-  - 4-round structured discussions
-  - Symposium Chair (PI) for facilitation
-  - Scientific Critic for rigorous feedback
-  - Automatic summary generation
+This project implements a virtual scientific symposium with 6 AI agents conducting 4 rounds of in-depth discussions to explore unified theories of ion transport across disciplines:
 
-## Installation
+- **4 Domain Experts**: Electrochemistry, Membrane Science, Biology, Nanofluidics
+- **1 Symposium Chair** (PI): Guides discussion direction
+- **1 Scientific Critic**: Provides critical feedback
 
-### Prerequisites
+---
+
+## ✨ 核心特性 | Key Features
+
+### 🤖 Validated Agentic RAG (验证式代理RAG)
+- 代理通过推理自主决定何时检索知识库
+- 实质性科学声明自动验证是否有证据支持
+- 17,763篇研究论文支持的领域隔离知识库
+
+### 🧠 增强型代理能力
+- ✅ **ReAct推理**: 明确的思考→行动→观察→回答流程
+- ✅ **持久记忆**: 跨研讨会轮次的学习和记忆
+- ✅ **战略规划**: 每轮讨论前的策略制定
+- ✅ **Phase 4工具**: 方程求解、绘图、概念图、网络搜索
+- ✅ **RAG验证**: 确保证据支持的回复
+
+### 🔬 科学严谨性
+- 领域隔离的知识库（防止跨领域污染）
+- 强制引用来源
+- 智能成本优化（简单回复跳过验证）
+
+---
+
+## 📋 系统要求 | Requirements
+
+### 环境依赖
 - Python 3.8+
-- OpenAI API key
-- Virtual Lab framework (parent project)
+- OpenAI API key (gpt-4o model access)
+- 至少2GB可用内存 (向量数据库177MB)
 
-### Setup
-
-1. **Clone the repository**:
-```bash
-git clone https://github.com/Dxxxxxxxy/ion-transport-virtual-lab.git
-cd ion-transport-virtual-lab
+### 主要依赖包
+```
+openai >= 2.0.0
+chromadb >= 1.4.0
+langchain >= 1.2.0
+langchain-openai
+langchain-community
+pymupdf
+matplotlib
+networkx
+sympy
 ```
 
-2. **Install dependencies**:
+---
+
+## 🚀 快速开始 | Quick Start
+
+### 1. 安装依赖
+
 ```bash
+# 克隆项目
+cd ion_transport
+
+# 安装依赖
 pip install -r requirements.txt
-```
 
-3. **Set up OpenAI API key**:
-```bash
-export OPENAI_API_KEY="your-api-key-here"
-```
-
-4. **Install Virtual Lab framework**:
-```bash
-# Navigate to parent directory and install virtual_lab
-cd ../virtual_lab
+# 安装项目（可编辑模式）
 pip install -e .
 ```
 
-## Usage
-
-### 1. Prepare Knowledge Base
-
-Create domain-specific PDF collections:
-
-```
-ion_transport/knowledge_base/pdfs/
-├── electrochemistry/        # Place electrochemistry papers here
-├── membrane_science/        # Place membrane science papers here
-├── biology/                 # Place biology papers here
-└── nanofluidics/           # Place nanofluidics papers here
-```
-
-### 2. Ingest Papers into Vector Database
+### 2. 配置环境变量
 
 ```bash
-python -m ion_transport.knowledge_base.ingest_papers
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑.env文件，填入你的OpenAI API密钥
+# OPENAI_API_KEY=sk-proj-your-actual-key-here
 ```
 
-This will:
-- Extract content from PDFs
-- Find DOIs and fetch citation metadata
-- Generate embeddings
-- Store in ChromaDB vector database
+或直接在终端设置：
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
 
-### 3. Run Full Symposium
+### 3. 运行研讨会
 
 ```bash
-python -m ion_transport.run_full_symposium
+# 设置Python路径
+export PYTHONPATH="$(pwd):$PYTHONPATH"
+
+# 运行完整4轮研讨会
+python run_full_symposium.py --yes
 ```
 
-The symposium consists of 4 rounds:
-1. **Round 1**: Map the Landscape - Understanding current paradigms
-2. **Round 2**: Identify Unifying Principles - Test analogies
-3. **Round 3**: Build Unified Framework - Define common core
-4. **Round 4**: Applications & Future Directions - Cross-pollination
+### 4. 查看结果
 
-### 4. Review Results
-
-Discussion transcripts are saved in:
+研讨会结果保存在 `results/full_symposium/` 目录：
 ```
-ion_transport/results/full_symposium/
+results/full_symposium/
 ├── round_1_landscape/
+│   ├── round1_discussion.md          # 讨论记录
+│   ├── round1_discussion.json        # JSON格式
+│   └── round1_discussion_summary.txt # 摘要
 ├── round_2_principles/
 ├── round_3_framework/
-└── round_4_applications/
+├── round_4_applications/
+└── agent_data/                        # 代理数据（计划、统计）
 ```
 
-## Project Structure
+---
+
+## 💰 成本估算 | Cost Estimates
+
+运行一次完整4轮研讨会的预计成本：
+
+- **LLM调用** (gpt-4o): ~$2.50
+- **RAG查询**: ~$0.50
+- **战略规划** (gpt-4o-mini): ~$0.10
+- **记忆整合**: ~$0.05
+- **工具使用**: $0.00 (本地计算)
+
+**总计**: **$3.20 - $4.00** / 每次研讨会
+
+**预计时间**: 15-25分钟
+
+---
+
+## 📁 项目架构 | Architecture
 
 ```
 ion_transport/
-├── agents/
-│   └── detailed_agents.py       # Domain expert agent definitions
-├── prompts/
-│   └── detailed_prompts.py      # Symposium agendas and questions
-├── knowledge_base/
-│   ├── ingest_papers.py         # PDF ingestion and processing
-│   ├── query_rag.py             # RAG query engine
-│   └── pdfs/                    # PDF storage by domain
-├── rag_tool.py                  # RAG tool integration
-├── run_full_symposium.py        # Main symposium orchestrator
-├── RAG_USER_GUIDE.md            # Detailed RAG documentation
-└── requirements.txt             # Python dependencies
+├── agents/                    # 代理系统
+│   ├── base_agent.py         # 基础代理类
+│   ├── constants.py          # 配置常量
+│   ├── agent_definitions.py  # 6个代理定义
+│   ├── prompts.py            # 讨论议程
+│   └── enhancements/         # 增强功能
+│       ├── unified_agent.py  # 统一代理封装
+│       ├── memory_system.py  # 记忆系统
+│       ├── planning_system.py # 规划系统
+│       ├── tool_manager.py   # 工具管理
+│       └── rag_validator.py  # RAG验证
+│
+├── tools/                     # 工具系统
+│   ├── rag_tool.py           # RAG集成
+│   ├── web_search_tool.py    # 网络搜索
+│   ├── equation_solver_tool.py # 方程求解
+│   ├── plotting_tool.py      # 数据可视化
+│   └── concept_mapper_tool.py # 概念映射
+│
+├── knowledge_base/            # 知识库系统
+│   ├── ingest_papers.py      # 论文导入
+│   ├── query_rag.py          # RAG查询
+│   └── multimodal_*.py       # 多模态提取
+│
+├── data/
+│   └── vector_db/            # ChromaDB向量数据库 (177MB)
+│       └── 17,763 documents from 200+ papers
+│
+├── orchestrator.py           # 研讨会协调器
+└── run_full_symposium.py     # 主程序入口
 ```
 
-## Configuration
+### 详细架构说明
 
-### Cost Estimates
-- **Full 4-round symposium**: $2.50-4.00
-- **Processing time**: 15-25 minutes
+- 📖 **[完整架构文档](PROJECT_ARCHITECTURE_CN.md)** - 500+行详细说明（中文）
+- 📊 **[系统状态报告](SYSTEM_STATUS.md)** - 运行指南和故障排除
 
-### Customization
+---
 
-Edit `agents/detailed_agents.py` to:
-- Modify expert personas and expertise
-- Add new domain experts
-- Adjust research focus
+## 🎓 研讨会流程 | Symposium Workflow
 
-Edit `prompts/detailed_prompts.py` to:
-- Customize symposium agendas
-- Change discussion questions
-- Modify discussion rules
+### Round 1: 地图绘制 (2轮发言)
+- 各领域专家介绍本领域的离子传输现象
+- 识别关键机制和挑战
 
-## Documentation
+### Round 2: 统一原理 (3轮发言)
+- 寻找跨领域的共同原理
+- 比较不同系统的选择性机制
 
-See [RAG_USER_GUIDE.md](RAG_USER_GUIDE.md) for detailed information about:
-- Knowledge base setup
-- PDF ingestion process
-- Citation extraction
-- Query system
-- Troubleshooting
+### Round 3: 统一框架 (4轮发言)
+- 构建整合多领域见解的理论框架
+- 开发预测模型
 
-## Requirements
+### Round 4: 应用与未来 (3轮发言)
+- 讨论实际应用
+- 确定未来研究方向
 
-- chromadb >= 0.4.0
-- langchain >= 0.1.0
-- langchain-openai >= 0.0.5
-- langchain-community >= 0.0.20
-- pymupdf >= 1.23.0
-- requests >= 2.31.0
-- tqdm >= 4.66.0
-- Virtual Lab framework
+---
 
-## License
+## 📊 知识库 | Knowledge Base
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### 向量数据库统计
+- **总文档数**: 17,763个文档片段
+- **数据库大小**: 176.80 MB
+- **来源**: 200+篇高质量研究论文
 
-## Author
+### 领域分布
+- **电化学**: 6,478 documents
+- **膜科学**: 4,026 documents
+- **生物学**: 534 documents
+- **纳米流体学**: 6,725 documents
 
-**Xiaoyang Du**
-- GitHub: [@Dxxxxxxxy](https://github.com/Dxxxxxxxy)
-- Email: kexiaoyangdu@ust.hk
-- Affiliation: Prof Dan Li's group at HKUST (Hong Kong University of Science and Technology)
+---
 
-## Citation
+## 🔧 高级使用 | Advanced Usage
 
-If you use this framework in your research, please cite:
+### 创建自定义代理
+
+```python
+from agents import Agent, UnifiedAgent
+
+# 定义基础代理
+custom_agent = Agent(
+    title="Custom Expert",
+    expertise="Your expertise description",
+    goal="Your goal",
+    role="Your role instructions",
+    model="gpt-4o"
+)
+
+# 封装为增强型代理
+enhanced_agent = UnifiedAgent(
+    base_agent=custom_agent,
+    domain="your_domain",
+    symposium_id="custom_symposium"
+)
+```
+
+### 自定义讨论议程
+
+```python
+from orchestrator import run_meeting
+from agents import CUSTOM_AGENT
+
+# 运行自定义讨论
+summary = run_meeting(
+    team_lead=PI,
+    team_members=(CUSTOM_AGENT,),
+    agenda="Your custom agenda",
+    num_rounds=3,
+    save_dir="results/custom_meeting"
+)
+```
+
+---
+
+## 🐛 故障排除 | Troubleshooting
+
+### 导入错误
+```bash
+# 确保PYTHONPATH正确设置
+export PYTHONPATH="$(pwd):$PYTHONPATH"
+
+# 重新安装包
+pip install -e .
+```
+
+### API认证失败
+```bash
+# 检查API密钥是否设置
+echo $OPENAI_API_KEY
+
+# 测试API密钥有效性
+python -c "import openai; client = openai.OpenAI(); print('API key valid')"
+```
+
+### 内存不足
+- 向量数据库较大(177MB)，确保至少2GB可用内存
+- 可以考虑减少每次RAG查询的top_k值（默认5）
+
+---
+
+## 📄 许可证 | License
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 📚 引用 | Citation
+
+如果您在研究中使用本项目，请引用：
 
 ```bibtex
-@software{du2026_ion_transport_virtual_lab,
-  author = {Prof. Dan Li's group/Du, Xiaoyang},
-  title = {Ion Transport Virtual Lab: Multi-Agent Framework for Research Symposiums},
+@software{ion_transport_virtual_lab,
+  title = {Ion Transport Virtual Lab: AI-Powered Multi-Agent Symposium System},
+  author = {Your Name},
   year = {2026},
-  url = {https://github.com/Dxxxxxxxy/ion-transport-virtual-lab}
+  url = {https://github.com/yourusername/ion_transport}
 }
 ```
 
-## Acknowledgments
+---
 
-Built with the Virtual Lab framework for multi-agent AI research collaboration.
+## 🤝 贡献 | Contributing
 
-## Contributing
+欢迎贡献！请遵循以下步骤：
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启Pull Request
 
-## Support
+---
 
-For questions or issues, please open an issue on GitHub or contact the author.
+## 📞 联系方式 | Contact
+
+- **项目维护者**: [Your Name]
+- **邮箱**: [your.email@example.com]
+- **机构**: HKUST (香港科技大学)
+
+---
+
+## 🙏 致谢 | Acknowledgments
+
+- OpenAI for GPT-4o model
+- ChromaDB for vector database
+- LangChain for RAG framework
+- 所有贡献的研究论文作者
+
+---
+
+**Last Updated**: January 10, 2026
+**Version**: 0.4.0 - Unified Agent with Validated Agentic RAG

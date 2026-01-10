@@ -6,3 +6,5 @@
 # Track other large data files
 *.db filter=lfs diff=lfs merge=lfs -text
 *.chroma filter=lfs diff=lfs merge=lfs -text
+data/**/*.pdf filter=lfs diff=lfs merge=lfs -text
+data/**/*.sqlite3 filter=lfs diff=lfs merge=lfs -text

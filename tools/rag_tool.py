@@ -55,7 +55,7 @@ def run_rag_query(query: str, domain: str, top_k: int = 5) -> str:
     """
     try:
         # Import here to avoid circular dependencies
-        from ion_transport.knowledge_base import get_context_for_agent
+        from knowledge_base import get_context_for_agent
 
         # Print query for transparency
         print(f'\n🔍 [{domain.upper()}] Querying knowledge base: "{query}"')
@@ -171,12 +171,13 @@ class RAGIntegration:
         if not self.use_rag:
             return
 
-        vector_db_path = Path(__file__).parent / "data" / "vector_db"
+        # Navigate from tools/ back to project root, then to data/vector_db
+        vector_db_path = Path(__file__).parent.parent / "data" / "vector_db"
 
         if not vector_db_path.exists():
             print("⚠️  Warning: Vector database not found. RAG will not work.")
             print(f"   Expected location: {vector_db_path}")
-            print("   Run: python -m ion_transport.knowledge_base.ingest_papers")
+            print("   Run: python knowledge_base/ingest_papers.py")
             self.use_rag = False
 
     def get_tools_for_agent(self, agent_domain: str) -> list:

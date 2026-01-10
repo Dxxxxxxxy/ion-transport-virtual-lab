@@ -12,6 +12,11 @@ unstructured>=0.10.0
 requests>=2.31.0
 tqdm>=4.66.0
 
+# Phase 4: Advanced Tools
+sympy>=1.12            # Symbolic mathematics
+matplotlib>=3.8.0      # Plotting and visualization
+networkx>=3.2          # Graph/concept mapping
+
 # Virtual Lab Framework
 # Note: Install virtual_lab from the parent repository
 # virtual_lab
