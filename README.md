@@ -316,9 +316,9 @@ Contributions are welcome! Please follow these steps:
 
 ## 📞 Contact
 
-- **Project Maintainer**: [Your Name]
-- **Email**: [your.email@example.com]
-- **Institution**: HKUST (Hong Kong University of Science and Technology)
+- **Project Maintainer**: Dr. Xiaoyang Du
+- **Email**: kexiaoyangdu@ust.hk
+- **Institution**: Prof. Dan Li's Group at HKUST (Hong Kong University of Science and Technology)
 
 ---
 
